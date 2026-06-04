@@ -1,0 +1,81 @@
+-- PROCEDIMIENTO finalizar_alquiler
+-- Registra la fecha de devolución y calcula el precio total. Usa JOIN.
+DELIMITER $$
+CREATE PROCEDURE finalizar_alquiler(IN p_idA INT, IN p_fechaDev DATE)
+BEGIN
+    DECLARE v_dias INT;
+    DECLARE v_precioDiario DECIMAL(10,2);
+    DECLARE v_matricula VARCHAR(15);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SELECT 'Error en la actualización del alquiler' AS mensaje; END;
+
+    SELECT a.matricula, v.precioPorDia INTO v_matricula, v_precioDiario
+    FROM ALQUILER a JOIN VEHICULO v ON a.matricula = v.matricula
+    WHERE a.idA = p_idA;
+
+    SET v_dias = DATEDIFF(p_fechaDev, (SELECT fechaInicio FROM ALQUILER WHERE idA = p_idA));
+    IF v_dias < 1 THEN SET v_dias = 1; END IF;
+
+    UPDATE ALQUILER 
+    SET fechaDevolucion = p_fechaDev, 
+        precio = (v_dias * v_precioDiario), 
+        estadoA = 'Completado' 
+    WHERE idA = p_idA;
+
+    UPDATE VEHICULO SET estadoV = 'Disponible' WHERE matricula = v_matricula;
+END $$
+DELIMITER ;
+
+-- PROCEDIMIENTO listar_vehiculos_categoria
+-- Usa un cursor y JOIN para listar vehículos de una categoría.
+DELIMITER $$
+CREATE PROCEDURE listar_vehiculos_categoria(IN p_cat_nombre VARCHAR(50))
+BEGIN
+    DECLARE v_mat VARCHAR(15);
+    DECLARE v_modelo VARCHAR(50);
+    DECLARE fin_cursor INT DEFAULT 0;
+    DECLARE cur_v CURSOR FOR 
+        SELECT v.matricula, v.modelo 
+        FROM VEHICULO v JOIN CATEGORIA c ON v.categoria = c.nombre 
+        WHERE c.nombre = p_cat_nombre;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET fin_cursor = 1;
+
+    OPEN cur_v;
+    bucle: LOOP
+        FETCH cur_v INTO v_mat, v_modelo;
+        IF fin_cursor = 1 THEN LEAVE bucle; END IF;
+        SELECT CONCAT('Vehículo: ', v_mat, ' - Modelo: ', v_modelo) AS info;
+    END LOOP;
+    CLOSE cur_v;
+END $$
+DELIMITER ;
+
+-- PROCEDIMIENTO asignar_empleado_alquiler
+-- Cambia el empleado responsable de un alquiler existente.
+DELIMITER $$
+CREATE PROCEDURE asignar_empleado_alquiler(IN p_idA INT, IN p_idE INT)
+BEGIN
+    DECLARE v_existe INT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SELECT 'Error al reasignar empleado' AS mensaje; END;
+
+    SELECT COUNT(*) INTO v_existe FROM EMPLEADO WHERE idE = p_idE;
+    IF v_existe = 0 THEN
+        SELECT 'El empleado no existe' AS mensaje;
+    ELSE
+        UPDATE ALQUILER SET idE = p_idE WHERE idA = p_idA;
+        SELECT 'Empleado reasignado correctamente' AS mensaje;
+    END IF;
+END $$
+DELIMITER ;
+
+-- PROCEDIMIENTO aplicar_descuento_categoria
+-- Incrementa el precio por día de todos los vehículos de una categoría.
+DELIMITER $$
+CREATE PROCEDURE aplicar_descuento_categoria(IN p_cat VARCHAR(50), IN p_porcentaje DECIMAL(5,2))
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN SELECT 'Error al actualizar precios' AS mensaje; END;
+
+    UPDATE VEHICULO SET precioPorDia = precioPorDia * (1 + (p_porcentaje/100)) 
+    WHERE categoria = p_cat;
+    SELECT CONCAT('Precios actualizados para la categoría: ', p_cat) AS mensaje;
+END $$
+DELIMITER ;

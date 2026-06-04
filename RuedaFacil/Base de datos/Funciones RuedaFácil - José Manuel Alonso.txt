@@ -1,0 +1,58 @@
+-- FUNCIÓN total_recaudado_categoria
+-- Calcula el dinero total generado por una categoría (JOIN entre 3 tablas).
+DELIMITER $$
+CREATE FUNCTION total_recaudado_categoria(p_cat VARCHAR(50)) RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+    DECLARE v_total DECIMAL(10,2);
+    SELECT SUM(a.precio) INTO v_total 
+    FROM ALQUILER a 
+    JOIN VEHICULO v ON a.matricula = v.matricula
+    JOIN CATEGORIA c ON v.categoria = c.nombre
+    WHERE c.nombre = p_cat AND a.estadoA = 'Completado';
+    RETURN IFNULL(v_total, 0);
+END $$
+DELIMITER ;
+
+-- FUNCIÓN nombre_cliente_alquiler
+-- Devuelve el nombre del cliente asociado a un ID de alquiler (JOIN).
+DELIMITER $$
+CREATE FUNCTION nombre_cliente_alquiler(p_idA INT) RETURNS VARCHAR(100)
+DETERMINISTIC
+BEGIN
+    DECLARE v_nombre VARCHAR(100);
+    SELECT c.nombre INTO v_nombre 
+    FROM CLIENTE c JOIN ALQUILER a ON c.dni = a.dni 
+    WHERE a.idA = p_idA;
+    RETURN IFNULL(v_nombre, 'No encontrado');
+END $$
+DELIMITER ;
+
+-- FUNCIÓN dias_alquiler_previstos
+-- Calcula los días de duración prevista de un alquiler.
+DELIMITER $$
+CREATE FUNCTION dias_alquiler_previstos(p_idA INT) RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE f_inicio DATE;
+    DECLARE f_fin DATE;
+    SELECT fechaInicio, fechaDevolucionPrevista INTO f_inicio, f_fin FROM ALQUILER WHERE idA = p_idA;
+    RETURN DATEDIFF(f_fin, f_inicio);
+END $$
+DELIMITER ;
+
+-- FUNCIÓN verificar_stock_vehiculo
+-- Devuelve un booleano sobre si un vehículo existe y está disponible.
+DELIMITER $$
+CREATE FUNCTION verificar_stock_vehiculo(p_matricula VARCHAR(15)) RETURNS BOOLEAN
+DETERMINISTIC
+BEGIN
+    DECLARE v_estado VARCHAR(50);
+    SELECT estadoV INTO v_estado FROM VEHICULO WHERE matricula = p_matricula;
+    IF v_estado = 'Disponible' THEN
+        RETURN TRUE;
+    ELSE
+        RETURN FALSE;
+    END IF;
+END $$
+DELIMITER ;

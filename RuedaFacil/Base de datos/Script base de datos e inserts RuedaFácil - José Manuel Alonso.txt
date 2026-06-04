@@ -1,0 +1,84 @@
+CREATE DATABASE ruedafacil; 
+
+CREATE TABLE CATEGORIA ( 
+    nombre VARCHAR(50) PRIMARY KEY, 
+    descripcion TEXT 
+); 
+ 
+CREATE TABLE CLIENTE ( 
+    dni VARCHAR(15) PRIMARY KEY, 
+    nombre VARCHAR(100) NOT NULL, 
+    telefono VARCHAR(20), 
+    correo VARCHAR(100), 
+    direccion VARCHAR(200), 
+    numCarnet VARCHAR(30) NOT NULL 
+); 
+ 
+CREATE TABLE EMPLEADO ( 
+    idE INT AUTO_INCREMENT PRIMARY KEY, 
+    nombre VARCHAR(100) NOT NULL, 
+    puesto VARCHAR(50), 
+    oficina VARCHAR(50), 
+    turno VARCHAR(50), 
+    aniosExp INT 
+); 
+ 
+CREATE TABLE VEHICULO ( 
+    matricula VARCHAR(15) PRIMARY KEY, 
+    marca VARCHAR(50) NOT NULL, 
+    modelo VARCHAR(50) NOT NULL, 
+    anioFabricacion INT, 
+    combustible VARCHAR(50), 
+    asientos INT, 
+    precioPorDia DECIMAL(10,2) NOT NULL, 
+    estadoV VARCHAR(50), 
+    categoria VARCHAR(50), 
+    FOREIGN KEY (categoria) REFERENCES CATEGORIA(nombre) ON UPDATE CASCADE 
+ON DELETE SET NULL 
+); 
+ 
+CREATE TABLE ALQUILER ( 
+    idA INT AUTO_INCREMENT PRIMARY KEY, 
+    fechaInicio DATE NOT NULL, 
+    fechaDevolucionPrevista DATE NOT NULL, 
+    fechaDevolucion DATE, 
+    precio DECIMAL(10,2), 
+    estadoA VARCHAR(50), 
+    dni VARCHAR(15), 
+    idE INT, 
+    matricula VARCHAR(15), 
+    FOREIGN KEY (dni) REFERENCES CLIENTE(dni) ON UPDATE CASCADE ON DELETE 
+CASCADE, 
+    FOREIGN KEY (idE) REFERENCES EMPLEADO(idE) ON UPDATE CASCADE ON DELETE 
+SET NULL, 
+    FOREIGN KEY (matricula) REFERENCES VEHICULO(matricula) ON UPDATE CASCADE 
+ON DELETE CASCADE 
+);  
+
+INSERT INTO CATEGORIA (nombre, descripcion) VALUES 
+('Turismo', 'Vehículos estándar y compactos, ideales para el uso diario y urbano.'),
+('Furgoneta', 'Vehículos de gran capacidad, perfectos para mudanzas, carga o grupos grandes.'),
+('Motocicleta', 'Vehículos de dos ruedas, muy ágiles y económicos para desplazarse rápidamente por la ciudad.'),
+('Vehículo eléctrico', 'Coches 100% ecológicos con cero emisiones, tecnología avanzada y etiqueta ambiental Cero.'),
+('Todoterreno', 'Vehículos potentes con tracción 4x4, diseñados para circular por terrenos difíciles, arena o campo.'),
+('De lujo', 'Modelos de alta gama, máximas prestaciones y confort.');
+
+INSERT INTO CLIENTE (dni, nombre, telefono, correo, direccion, numCarnet) VALUES 
+('12345678A', 'Juan Manuel Benítez', '645908567', 'juan.benitez@email.com', 'Calle Mayor 15, Sevilla', 'CARNET-ABC08'),
+('91234567B', 'Clara Torres Marcos', '677420712', 'clara.torres@email.com', 'Av. Constitución 42, Dos Hermanas', 'CARNET-XYZ34'),
+('89123456C', 'Sebastián Ramírez Santos', '669449573', 'sebastian.ramirez@email.com', 'Calle Betis 8, Triana', 'CARNET-DEF42');
+
+INSERT INTO EMPLEADO (nombre, puesto, oficina, turno, anosExp) VALUES 
+('Julio Hernández Rueda', 'Recepcionista', 'Oficina Central', 'Mañana', 4),
+('Francisco Rodríguez Sancho', 'Gestor de Flota', 'Oficina Aeropuerto', 'Tarde', 7),
+('Pilar Ortiz Blanco', 'Asesora Comercial', 'Oficina Estación', 'Noche', 2);
+
+INSERT INTO VEHICULO (matricula, marca, modelo, anioFabricacion, combustible, asientos, precioPorDia, estadoV, categoria) VALUES 
+('1111AAA', 'Seat', 'Ibiza', 2022, 'Gasolina', 5, 35.00, 'Disponible', 'Turismo'),
+('2222BBB', 'Renault', 'Traffic', 2021, 'Diesel', 9, 70.00, 'Disponible', 'Furgoneta'),
+('3333CCC', 'Tesla', 'Model Y', 2024, 'Electrico', 5, 95.00, 'Alquilado', 'Vehículo eléctrico');
+
+INSERT INTO ALQUILER (fechaInicio, fechaDevolucionPrevista, fechaDevolucion, precio, estadoA, dni, idE, matricula) VALUES 
+('2026-05-01', '2026-05-05', '2026-05-05', 140.00, 'Finalizado', '12345678A', 1, '1111AAA'),
+('2026-05-20', '2026-05-25', NULL, 475.00, 'Activo', '91234567B', 2, '3333CCC'),
+('2026-06-01', '2026-06-03', NULL, 140.00, 'Activo', '89123456C', 3, '2222BBB');
